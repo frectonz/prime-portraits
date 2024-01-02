@@ -563,7 +563,7 @@ dependencies = [
  "image",
  "num-bigint",
  "num-bigint-dig",
- "rand",
+ "num-traits",
 ]
 
 [[package]]

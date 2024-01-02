@@ -6,7 +6,7 @@ use image::{
     Rgb,
 };
 use num_bigint::BigUint;
-use rand::Rng;
+use num_traits::Num;
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
@@ -45,83 +45,56 @@ fn main() -> Result<()> {
 
     let (width, height) = (img.width(), img.height());
 
-    let mut digits = img
+    let digits = img
         .pixels()
-        .map(|x| (x.0[0] % 9) as u32)
-        .collect::<Vec<_>>();
+        .map(|x| (x.0[0] % 10))
+        .map(|x| x.to_string())
+        .collect::<String>();
+    let img_num = BigUint::from_str_radix(&digits, 10).unwrap();
 
     println!("I have converted the image into a number");
-    print_big_num(&digits, width, height);
+    print_big_num(&img_num, width, height);
 
     println!("I am now calculating the prime number version, this will take a long time");
-    // let img_num = next_prime(&digits);
-    // print_big_num(&img_num, width, height);
-
-    let mut rng = rand::thread_rng();
-    loop {
-        let positions = (0..1)
-            .map(|_| rng.gen_range(1..digits.len()))
-            .collect::<Vec<_>>();
-
-        let originals = positions
-            .into_iter()
-            .map(|pos| {
-                let elem = digits.get_mut(pos).unwrap();
-                let original = *elem;
-                *elem = rng.gen_range(0..=9);
-                (pos, original)
-            })
-            .collect::<Vec<_>>();
-
-        if is_prime(&digits) {
-            break;
-        } else {
-            originals.into_iter().for_each(|(pos, original)| {
-                let elem = digits.get_mut(pos).unwrap();
-                *elem = original;
-            })
-        }
-    }
-    print_big_num(&digits, width, height);
+    let img_num = next_prime(&img_num);
+    print_big_num(&img_num, width, height);
 
     Ok(())
 }
 
-fn _next_prime(n: &Vec<u32>) -> Vec<u32> {
+fn next_prime(n: &BigUint) -> BigUint {
     let n = num_bigint_dig::prime::next_prime(&num_bigint_dig::BigUint::from_bytes_le(
-        &BigUint::new(n.to_owned()).to_bytes_le(),
+        &n.to_bytes_le(),
     ));
-    BigUint::from_bytes_le(&n.to_bytes_le()).to_u32_digits()
+    BigUint::from_bytes_le(&n.to_bytes_le())
 }
 
-fn is_prime(n: &Vec<u32>) -> bool {
+fn _is_prime(n: &Vec<u32>) -> bool {
     num_bigint_dig::prime::probably_prime(
         &num_bigint_dig::BigUint::from_bytes_le(&BigUint::new(n.to_owned()).to_bytes_le()),
         2,
     )
 }
 
-fn print_big_num(digits: &[u32], width: u32, height: u32) {
+fn print_big_num(digits: &BigUint, width: u32, height: u32) {
+    let digits = digits.to_string();
+
+    let mut padded = "0".repeat((width * height) as usize - digits.len());
+    padded.push_str(&digits);
+    let padded = padded.chars().collect::<Vec<_>>();
+
     for y in 0..width {
         for x in 0..height {
-            match digits.get((y * width + x) as usize) {
+            match padded.get((y * width + x) as usize) {
                 Some(x) => print!("{x}"),
                 None => print!(" "),
             }
         }
         println!();
     }
+    println!();
 
-    println!(
-        "num = {}",
-        digits
-            .into_iter()
-            .map(|d| d.to_string())
-            .fold(String::new(), |mut acc, d| {
-                acc.push_str(&d);
-                acc
-            })
-    )
+    println!("num = {digits}")
 }
 
 struct MyColorMap;
