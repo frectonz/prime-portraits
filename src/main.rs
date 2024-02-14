@@ -79,7 +79,7 @@ fn main() -> Result<()> {
         .replace("[DIGITS]", &(width * height).to_string());
 
     fs::write(&output, html_visualization)
-        .wrap_err("Could write the generated visualization to a file.")?;
+        .wrap_err("Couldn't write the generated visualization to a file.")?;
 
     println!();
     println!("Saved visualization of the prime number as an html file at: '{output}'");
